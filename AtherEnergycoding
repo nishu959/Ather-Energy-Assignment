@@ -1,0 +1,182 @@
+import random
+import copy
+from IPython.core.display import display
+
+sizeOfBoard = 4
+
+
+def pickNewValue():
+    if random.randint(1, 8) == 1:
+        return 4 
+    else:
+        return 2
+
+        
+board = [[0 for i in range(sizeOfBoard)] for j in range(sizeOfBoard)]
+num = 2 
+while num > 0:
+    row = random.randint(0, sizeOfBoard - 1)
+    col = random.randint(0, sizeOfBoard - 1)
+    
+    if board[row][col] == 0:
+        board[row][col] = pickNewValue()
+        num -= 1
+
+print("Welcome to 2048 game. ")
+print("Press 1 for left, 2 for right, 3 for up , 4 for down")
+
+
+def display():
+    mx = board[0][0]
+    for i in board:
+        for j in i:
+            mx = max(mx, j)
+    
+    space = len(str(mx))
+    for r in board:
+        comprow = "|"
+        for ele in r:
+            if ele == 0:
+                comprow += " " * space + "|"
+            else:
+                comprow += (" " * (space - len(str(ele)))) + str(ele) + "|"
+                
+        print(comprow)
+    print()
+
+    
+def mergeOneRowL(row):
+    for _ in range(sizeOfBoard - 1):
+        for i in range(sizeOfBoard - 1, 0, -1):
+            if row[i - 1] == 0:
+                row[i - 1] = row[i]
+                row[i] = 0
+                
+    for i in range(sizeOfBoard - 1):
+        if row[i] == row[i + 1]:
+            row[i] *= 2
+            row[i + 1] = 0
+    
+    for i in range(sizeOfBoard - 1, 0, -1):
+        if row[i - 1] == 0:
+            row[i - 1] = row[i]
+            row[i] = 0
+    return row
+
+
+def merge_left(curboard):
+    
+    for i in range(sizeOfBoard):
+        curboard[i] = mergeOneRowL(curboard[i])
+    return curboard
+
+
+def reverse(row):
+    new = []
+    for i in range(sizeOfBoard - 1, -1, -1):
+        new.append(row[i])
+    return new
+
+
+def merge_right(curboard):
+    for i in range(sizeOfBoard):
+        curboard[i] = reverse(curboard[i])
+        curboard[i] = mergeOneRowL(curboard[i])
+        curboard[i] = reverse(curboard[i])
+        
+    return curboard
+
+    
+def transpose(curboard):
+    for j in range(sizeOfBoard):
+        for i in range(j, sizeOfBoard):
+            if not i == j:
+                temp = curboard[j][i]
+                curboard[j][i] = curboard[i][j]
+                curboard[i][j] = temp
+    return curboard
+
+
+def merge_up(curboard):
+    curboard = transpose(curboard)
+    curboard = merge_left(curboard)
+    curboard = transpose(curboard)
+    return curboard
+        
+    
+def merge_down(curboard):
+    curboard = transpose(curboard)
+    curboard = merge_right(curboard)
+    curboard = transpose(curboard)
+    return curboard  
+
+
+def addNewVal():
+    row_ = random.randint(0, sizeOfBoard - 1)
+    col_ = random.randint(0, sizeOfBoard - 1)
+    
+    while not board[row_][col_] == 0:
+        row_ = random.randint(0, sizeOfBoard - 1)
+        col_ = random.randint(0, sizeOfBoard - 1)
+        
+    board[row_][col_] = pickNewValue()
+
+    
+def won():
+    for i in board:
+        if 2048 in i:
+            return True
+    return False
+
+
+def moves():
+    temp1 = copy.deepcopy(board)
+    temp2 = copy.deepcopy(board)
+    temp1 = merge_down(temp1)
+    if temp1 == temp2:
+        temp1 = merge_up(temp1)
+        if temp1 == temp2:
+            temp1 = merge_left(temp1)
+            if temp1 == temp2:
+                temp1 = merge_right(temp1)
+                if temp1 == temp2:
+                    return True 
+    return False
+
+
+display()
+
+gameOver = False 
+while not gameOver:
+    move = int(input("Which direction you want to merge? "))
+    valid = True 
+    tempboard = copy.deepcopy(board)
+    if move == 1:
+        board = merge_left(board)
+    elif move == 2:
+        board = merge_right(board)
+    elif move == 3:
+        board = merge_up(board) 
+    elif move == 4:
+        board = merge_down(board)
+    else:
+        valid = False
+        
+    if not valid:
+        print("Input provided was not valid, please enter a valid input")
+    else:
+        if tempboard == board:
+            print("Try a different direction!")
+        else:
+            
+            if won():
+                display()
+                print("You Won!, Congratulations")
+                gameOver = True
+            else:
+                addNewVal()
+                display()
+                if moves():
+                    print("No possible moves. You Lose!")
+                    gameOver = True
+    
